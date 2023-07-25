@@ -1,0 +1,3 @@
+pyioapi==0.2.2
+geopandas==0.13.2
+f90nml==1.4.3
