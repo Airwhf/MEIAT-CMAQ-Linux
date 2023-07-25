@@ -18,6 +18,7 @@ conda activate meiat
 
 ```shell
 pip install -r requirements.txt
+pip install PseudoNetCDF
 ```
 
 
@@ -27,7 +28,5 @@ pip install -r requirements.txt
 ```shell
 python c2f.py
 ```
-
-
 
 
