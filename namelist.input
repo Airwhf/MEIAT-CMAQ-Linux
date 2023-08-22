@@ -1,12 +1,12 @@
 &global
     griddesc_file = 'Input/GRIDDESC'
     griddesc_name = "PRD274x181"
-    coarse_grid_file = 'shapefile/MEIC-0P25.shp'
-    nc_emission_dir = "Input/MEIC-2017"
+    coarse_grid_file = 'shapefile/MEIC-0P50.shp'
+    nc_emission_dir = "Input/MEICv1.4-2020"
     inventory_label = "MEIC"
-    inventory_year = "2017"
+    inventory_year = "2020"
     sectors = 'residential', 'power', 'agriculture', 'industry', 'transportation'
-    allocator = 'landscan-global-2017_nodata.nc', 'power.nc', 'agriculture.nc', 'industry.nc', 'road1km.nc'
+    allocator = 'china_population_2017.nc', 'power.nc', 'agriculture.nc', 'industry.nc', 'road1km.nc'
 	allocator_type = "raster", "raster", "raster", "raster", "raster"
     inventory_mechanism = "MEIC-CB05"
     target_mechanism = "CB06"
