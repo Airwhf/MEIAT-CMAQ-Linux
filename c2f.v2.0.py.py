@@ -39,6 +39,7 @@ def zonal(file, coarse_shpf, griddesc, gridname, fid):
         _type_: pandas.DataFrame.
     """    
     dataset = xr.open_dataset(file)
+    
     print("Original dataset:")
     print(dataset)
     print()
@@ -49,6 +50,7 @@ def zonal(file, coarse_shpf, griddesc, gridname, fid):
     print(f"lon_min, lon_max = {lon_min}, {lon_max}")
     print(f"lat_min, lat_max = {lat_min}, {lat_max}")
     print()
+    
     # TODO Finish You can update for limit the range of dataset by longitude and latitude.
     # Create a Template
     gf = pnc.pncopen(griddesc, format='griddesc', GDNAM=gridname, SDATE=1970001)
@@ -63,6 +65,16 @@ def zonal(file, coarse_shpf, griddesc, gridname, fid):
     print("Limited dataset:")
     print(dataset)
     print()
+    
+    # TODO interpolate the data and convert units to t/yr.
+    # Calculate the new latitude and longitude coordinates with 0.01 degree interval
+    lat_new = np.arange(lat_min, lat_max + 0.01, 0.01)
+    lon_new = np.arange(lon_min, lon_max + 0.01, 0.01)
+    dataset['z'] = dataset['z'].interp(lat=lat_new, lon=lon_new, method='linear')
+    # Convert kg/km2/s to t/yr.
+    dataset['z'] = dataset['z'] * 0.001 * 31536000 * 1.1131944444444444 ** 2
+    
+    
     lons, lats = np.meshgrid(dataset.lon.values, dataset.lat.values)
     # z = dataset.z.values
     # Create a DataFrame from the 'z' variable in the NetCDF dataset
@@ -160,7 +172,7 @@ def draw_model_grid(griddesc_file):
     gdf_fishgrid.to_file(output_name,
                          driver='ESRI Shapefile',
                          encoding='utf-8')
-    return output_name
+    return output_name, grid.XCELL, grid.YCELL
 
 
 def define_parent_grid(model_grid, parent_grid, gdnm):
@@ -518,7 +530,7 @@ if __name__ == "__main__":
         print('------------------------------------------')
         print('Start the draw model grid module')
         print('------------------------------------------')
-        model_grid = draw_model_grid(gridf)
+        model_grid, grid_dx, grid_dy = draw_model_grid(gridf)
         # print('Successful for drawing model grid.')
         print()
     else:

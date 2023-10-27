@@ -6,7 +6,7 @@
     inventory_label = "MEIC"
     inventory_year = "2020"
     sectors = 'residential', 'power', 'agriculture', 'industry', 'transportation'
-    allocator = 'china_population_2017.nc', 'power.nc', 'agriculture.nc', 'industry.nc', 'road1km.nc'
+    allocator = 'china_population_2017.nc', 'power.nc', 'agriculture.nc', 'industry.nc', 'ave-nodata-0.nc'
 	allocator_type = "raster", "raster", "raster", "raster", "raster"
     inventory_mechanism = "MEIC-CB05"
     target_mechanism = "CB06"
@@ -15,8 +15,8 @@
  /
 
  &control
-    control_model_grid = Y
-    control_grid_info = Y
+    control_model_grid = N
+    control_grid_info = N
     control_coarse_emission = Y
 	control_allocation_factor = Y
  /

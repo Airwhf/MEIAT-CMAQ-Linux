@@ -13,8 +13,8 @@ import re
 if __name__ == "__main__":
     print("This script is written by Haofan Wang.")
     # ------------------------------------------
-    input_dir = r"/mnt/f/data/MEICv1.4/2020"
-    output_dir = r"/mnt/e/GitHub/MEIAT-CMAQ-Linux/Input/MEICv1.4-2020"
+    input_dir = r"F:\data\MEICv1.4\2020"
+    output_dir = r"D:\GitHub\MEIAT-CMAQ-Linux\Input\MEICv1.4-2020"
     # ------------------------------------------
 
     os.makedirs(output_dir, exist_ok=True)
@@ -41,6 +41,12 @@ if __name__ == "__main__":
         # 打印读取到的数组（列表）
         _ = np.array(lines, dtype="float")
         z = np.array(np.where(_ == -9999.0, 0.0, _), dtype='float')
+               
+        x_resolution_km = 25 # km
+        y_resolution_km = 25 # km
+        
+        #TODO convert emission units from t/yr to kg/km2/s.
+        z = z * 1000.0 / 25**2 / 31536000
 
         # 最大最小经纬度
         min_long, min_lat, max_long, max_lat = 70.0, 10.0, 150.0, 60.0
@@ -52,18 +58,11 @@ if __name__ == "__main__":
         lons = np.arange(min_long, max_long, x_resolution) + 0.25
         lats = np.flip(np.arange(min_lat, max_lat, y_resolution)) - 0.25
 
-        
-        # 使用已知的经纬度和数值创建xarray数据数组
-        # coords=[('lat', lats, {'units': 'degrees_north'}),
-        #         ('lon', lons, {'units': 'degrees_east'})]
-        
-        # da = xr.DataArray(z, coords=coords, dims=['lat', 'lon'])
-
         da = xr.DataArray(
             z,
             coords=[('lat', lats, {'units': 'degrees_north'}),
                     ('lon', lons, {'units': 'degrees_east'})],
-            attrs={'description': 'Example data'}
+            attrs={'description': 'Example data', 'units': 'kg/km2/s'}
         )
         
         # 创建xarray数据集并将数据数组添加进去
