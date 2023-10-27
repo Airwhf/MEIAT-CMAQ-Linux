@@ -16,11 +16,15 @@ if __name__ == "__main__":
     
     # Set the inventory with Geotiff format.
     meic_asc_dir = r'F:\data\Emission\MEICv1.4\2020'  
+    mix_dir = r'F:\data\Emission\MIX\2010'
+    mix_year = 2010
+    meic_year = 2020
+    merge_output_dir = r'F:\data\Emission\MEICMIX\2020'
     sectors = ['residential', 'power', 'industry', 'agriculture', 'transportation']
     
     # Set the inventory.
-    inventory_label = 'MEIC'
-    inventory_year = 2020 
+    inventory_label = 'MEICMIX'
+    inventory_year = meic_year 
     
     # Set the inventory period.
     start_date = '2017-01-01'
@@ -36,11 +40,19 @@ if __name__ == "__main__":
     
     start_time = time.time()
     # process meic.
-    emission_dir = f'{meic_asc_dir}/MEIAT'
-    os.makedirs(emission_dir, exist_ok=True)
-    emis_meic(meic_asc_dir, emission_dir)  
+    meic_emission_dir = f'{meic_asc_dir}/MEIAT'
+    os.makedirs(meic_emission_dir, exist_ok=True)
+    emis_meic(meic_asc_dir, meic_emission_dir)  
     
-    exit()
+    # process mix.
+    mix_emission_dir = f'{mix_dir}/MEIAT'
+    os.makedirs(mix_emission_dir, exist_ok=True)
+    emis_mix(mix_dir, mix_emission_dir, mix_year)
+    
+    # merge meic and mix.
+    emission_dir = merge_output_dir
+    merge_mixmeic(meic_emission_dir, meic_year, mix_emission_dir, mix_year, emission_dir)
+    
     output_dir = f'model_emission_{griddesc_name}'
     os.makedirs(output_dir, exist_ok=True)
     periods = pd.period_range(pd.to_datetime(start_date), pd.to_datetime(end_date), freq='D')
