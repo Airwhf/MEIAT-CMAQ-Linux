@@ -5,6 +5,7 @@
 import os
 import time
 from src_f2c import *
+from src_public import *
 
 
 if __name__ == "__main__":
@@ -14,7 +15,7 @@ if __name__ == "__main__":
     griddesc_name = 'CN27km'    
     
     # Set the inventory with Geotiff format.
-    emission_dir = r'F:\data\Emission\MEICv1.4\MEIAT-2020'  
+    meic_asc_dir = r'F:\data\Emission\MEICv1.4\2020'  
     sectors = ['residential', 'power', 'industry', 'agriculture', 'transportation']
     
     # Set the inventory.
@@ -34,6 +35,12 @@ if __name__ == "__main__":
     # ========================================================================================
     
     start_time = time.time()
+    # process meic.
+    emission_dir = f'{meic_asc_dir}/MEIAT'
+    os.makedirs(emission_dir, exist_ok=True)
+    emis_meic(meic_asc_dir, emission_dir)  
+    
+    exit()
     output_dir = f'model_emission_{griddesc_name}'
     os.makedirs(output_dir, exist_ok=True)
     periods = pd.period_range(pd.to_datetime(start_date), pd.to_datetime(end_date), freq='D')

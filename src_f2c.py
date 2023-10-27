@@ -5,30 +5,28 @@ import PseudoNetCDF as pnc
 import numpy as np
 import glob
 import re
-import rioxarray as rxr
+import xarray as xr
 
 os.environ["IOAPI_ISPH"] = "6370000."
 # Ignore the warning information from pandas.
 pd.options.mode.chained_assignment = None
 
 
-def read_tiff(file, shapefactor=2):
-    """
-
-    :param file: The file path of GeoTIFF.
-    :return: value, longitude, latitude.
-    """
-    dataset = rxr.open_rasterio(file)
-    longitude = dataset.coords["x"].values
-    latitude = dataset.coords["y"].values
-    # lons, lats = np.meshgrid(longitude, latitude)
-    value = dataset[0, ...].values
+def read_netcdf(file, shapefactor=2):
+    '''
+    
+    '''
+    dataset = xr.open_dataset(file)
+    longitude = dataset.coords["longitude"].values
+    latitude = dataset.coords["latitude"].values
+    value = dataset['emission'].values
     # Update the shape factor on 27/10/2023 by Haofan.
     new_shape = (value.shape[0]*shapefactor, value.shape[1]*shapefactor)
     value = np.kron(value, np.ones((shapefactor, shapefactor), dtype=value.dtype)) * (1/shapefactor**2)
     longitude = np.linspace(longitude[0], longitude[-1], new_shape[1])
     latitude = np.linspace(latitude[0], latitude[-1], new_shape[0])
     lons, lats = np.meshgrid(longitude, latitude)
+    value = np.where(value < 0.0, 0.0, value)
     return value, lons, lats
 
 
@@ -41,18 +39,18 @@ def create_source_table(input_dir, mm, sector, shapefactor=2):
     :return: DataFrame, a table include latitude, longitude and species values.
     """
     # Search the files in the input directory.
-    files = glob.glob(f"{input_dir}/*_{mm}__{sector}__*.tiff")
+    files = glob.glob(f"{input_dir}/*_{mm}__{sector}__*.nc")
 
     # Build a DataFrame to store the inventory information.
     df = pd.DataFrame(columns=["lat", "lon"])
     # --- Start loop of the sector files.
     for file in files:
         # Read the GeoTIFF and return the value and geographic information.
-        value, lons, lats = read_tiff(file, shapefactor=shapefactor)
+        value, lons, lats = read_netcdf(file, shapefactor=shapefactor)
 
         # Get the species name from file name.
         basename = os.path.basename(file)
-        condition = f"(.*?)_(.*?)_{mm}__{sector}__(.*?).tiff"
+        condition = f"(.*?)_(.*?)_{mm}__{sector}__(.*?).nc"
         encode_name = re.findall(condition, basename)[0]
         # label = encode_name[0]
         # year = encode_name[1]
@@ -61,6 +59,12 @@ def create_source_table(input_dir, mm, sector, shapefactor=2):
         df[pollutant] = value.flatten()
         df["lat"] = lats.flatten()
         df["lon"] = lons.flatten()
+    
+    # Calculate the PMC.
+    if "PMC" not in df.columns:
+        print("Calculate PMC...")
+        df["PMC"] = df['PM10'] - df['PM25']
+    
     return df
 
 def source2cmaq(emission_date, grid_desc, grid_name, sector, input_dir, inventory_mechanism, target_mechanism, output_dir, shapefactor=2):
@@ -114,9 +118,7 @@ def source2cmaq(emission_date, grid_desc, grid_name, sector, input_dir, inventor
     celltotal = celltotal.drop(columns=["lon", "lat"], axis=1)
 
     # Read species file.
-    species_file = (
-        f"species/{inventory_mechanism}_{target_mechanism}_speciate_{sector}.csv"
-    )
+    species_file = (f"species/{inventory_mechanism}_{target_mechanism}_speciate_{sector}.csv")
     species_info = pd.read_csv(species_file)
     fname_list = species_info.pollutant.values
     var_list = species_info.emission_species.values
@@ -134,9 +136,7 @@ def source2cmaq(emission_date, grid_desc, grid_name, sector, input_dir, inventor
     hourly_factor = _hourly_factor[sector].values
 
     # Loop the species and create the variable to IOAPI file.
-    items = zip(
-        fname_list, var_list, factor_list, divisor_list, origin_units, target_units
-    )
+    items = zip(fname_list, var_list, factor_list, divisor_list, origin_units, target_units)
     for fname, var, split_factor, divisor, origin_unit, target_unit in items:
         try:
             # Extract the current pollutant.
@@ -165,9 +165,7 @@ def source2cmaq(emission_date, grid_desc, grid_name, sector, input_dir, inventor
             elif origin_unit == "Mg" and target_unit == "g/s":
                 result["values"] = result["values"] * 1000000.0 / 3600.0 * split_factor
             elif origin_unit == "Mg" and target_unit == "mol/s":
-                result["values"] = (
-                    result["values"] * 1000000.0 / 3600.0 / divisor * split_factor
-                )
+                result["values"] = (result["values"] * 1000000.0 / 3600.0 / divisor * split_factor)
 
             # Convert the I, J, hour to int.
             result[["hour", "J", "I"]] = result[["hour", "J", "I"]].astype("int")
@@ -187,6 +185,7 @@ def source2cmaq(emission_date, grid_desc, grid_name, sector, input_dir, inventor
             # If don not have this pollutant in GeoTIFF, skip it.
             print(f"Warning: Do not have the pollutant named {fname}.")
             continue
+        
     # Get rid of initial DUMMY variable
     del tmpf.variables["DUMMY"]
 

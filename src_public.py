@@ -9,9 +9,9 @@ def time_format():
     return f'{datetime.datetime.now()}|> '
 
 
-def emis_meic(input_dir):
-    output_dir = input_dir
-    # os.makedirs(output_dir, exist_ok=True)
+def emis_meic(input_dir, output_dir):
+    # output_dir = input_dir
+    os.makedirs(output_dir, exist_ok=True)
     files = glob.glob(f"{input_dir}/*.asc")
     for file in files:
         sub_name = os.path.basename(file)
@@ -64,7 +64,54 @@ def emis_meic(input_dir):
         
         print(f"{time_format()} {output_name} has been created.")
 
-# if __name__ == '__main__':
-#     input_dir = r'F:\data\Emission\MEICv1.4\2020'
-#     emis_meic(input_dir)
+
+
+def emis_mix(input_dir, output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Search the files.
+    files = glob.glob(f"{input_dir}/*.nc")
+
+    # Get the name of pollutants.
+    for file in tqdm.tqdm(files):
+        ds = xr.open_dataset(file)
+        lats = ds.coords["lat"].__array__()
+        lons = ds.coords["lon"].__array__()
+        lonmin, latmax, lonmax, latmin = lons.min(), lats.max(), lons.max(), lats.min()
+        num_lon = lons.shape[0]
+        num_lat = lats.shape[0]
+        res = 0.25
+        transform = Affine.translation(lonmin - res / 2, latmin - res / 2) * Affine.scale(res, res)
+
+        # Set sectors.
+        sectors = ["POWER", "INDUSTRY", "RESIDENTIAL", "TRANSPORT", "AGRICULTURE"]
+        file_name = os.path.basename(file)
+        condition = fr"MICS_Asia_(.*?)_{year}_0.25x0.25.nc"
+        pollutant = re.findall(condition, file_name)[0]
+
+        for var_name in list(ds.keys()):
+            var = ds[var_name]
+            months = var.__getattr__("time").values
+            for i in range(12):
+                month = "%.2d" % months[i]
+                temp_var = var[i, ...].values
+                sector = var_name.split("_")[-1]
+
+                if sector == "TRANSPORT":
+                    sector_label = "transportation"
+                else:
+                    sector_label = sector.lower()
+
+                tiffile = f"MIX_{year}_{month}__{sector_label}__{pollutant}.tiff"
+                with rio.open(f"{output_dir}/{tiffile}",
+                              'w',
+                              driver='GTiff',
+                              height=num_lat,
+                              width=num_lon,
+                              count=1,
+                              dtype=temp_var.dtype,
+                              crs='+proj=latlong',
+                              transform=transform, ) as dst:
+                    dst.write(temp_var, 1)
+                # print(f"Finish and output {output_dir}/{tiffile}.")
 
