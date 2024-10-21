@@ -1,2 +1,4 @@
-
+*.DS_store
+emissions/*
 model_emission_*
+/__pycache__
