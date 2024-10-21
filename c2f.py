@@ -15,15 +15,16 @@ import f90nml
 os.environ['IOAPI_ISPH'] = '6370000.'
 
 def user_control():
-    import datetime
-    specified_time = datetime.datetime(2025, 6, 30, 23, 59)
-    # 获取当前时间
-    current_time = datetime.datetime.now()
-    # 检查当前时间是否已经超过指定时间
-    if current_time > specified_time:
-        return False
-    else:
-        return True
+    # import datetime
+    # specified_time = datetime.datetime(2025, 6, 30, 23, 59)
+    # # 获取当前时间
+    # current_time = datetime.datetime.now()
+    # # 检查当前时间是否已经超过指定时间
+    # if current_time > specified_time:
+    #     return False
+    # else:
+    #     return True
+    return True
 
 def zonal(file, coarse_shpf, griddesc, gridname, fid):
     """_summary_
