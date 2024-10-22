@@ -14,23 +14,24 @@ if __name__ == "__main__":
     griddesc_name = 'CN27km'    
     
     # Set the inventory with Geotiff format.
-    emission_dir = r'F:\data\Emission\MEICv1.4\MEIAT-2020'  
-    sectors = ['residential', 'power', 'industry', 'agriculture', 'transportation']
+    emission_dir = r'/Volumes/project/Emissions/EDGAR_reformat'  
+    sectors = ['AGRICULTURE', 'BUILDINGS', 'FUEL_EXPLOITATION',
+               'IND_COMBUSTION', 'IND_PROCESSES', 'POWER_INDUSTRY', 'TRANSPORT', 'WASTE']
     
     # Set the inventory.
-    inventory_label = 'MEIC'
-    inventory_year = 2020 
+    inventory_label = 'FT2022'
+    inventory_year = 2019
     
     # Set the inventory period.
     start_date = '2017-01-01'
     end_date = '2017-01-02'
     
     # Species allocation.
-    inventory_mechanism = 'MEIC-CB05'
+    inventory_mechanism = 'EDGAR'
     target_mechanism = 'CB06'
     
     # shape factor
-    shapefactor = 4
+    shapefactor = 2
     # ========================================================================================
     
     start_time = time.time()
