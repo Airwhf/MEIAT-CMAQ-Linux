@@ -12,8 +12,8 @@ def process_emission(args):
 if __name__ == "__main__":
     # ========================================================================================
     # Set GRIDDESC configuration.
-    griddesc_file = 'input/GRIDDESC.UK80x80'
-    griddesc_name = 'UK80x80'    
+    griddesc_file = 'input/GRIDDESC.UK91x112'
+    griddesc_name = 'UK91x112'    
     
     # Set the inventory with Geotiff format.
     emission_dir = r'/Volumes/project/Emissions/EDGAR_reformat'  
