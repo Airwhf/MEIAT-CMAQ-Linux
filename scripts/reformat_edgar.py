@@ -90,130 +90,41 @@ if __name__ == "__main__":
     }
     
     # 设置需要处理的年份
-    year = 2019
+    years = [2000, 2010, 2020]
     
-    # 遍历部门和物种，将其转换为MEIAT-CMAQ格式
-    for sector in sector_dict.keys():
-        for species in species_in:
-            
-            # 处理VOC排放
-            if 'VOC_spec_' in species:
-                voc_number = species.split('_')[-1]
+    # 遍历年份
+    for year in years:
+        # 遍历部门和物种，将其转换为MEIAT-CMAQ格式
+        for sector in sector_dict.keys():
+            for species in species_in:
                 
-                # 读取对应的物种分配表
-                voc_speice = voc_species_map[voc_number]
-                if voc_speice == '-':
-                    continue
-                
-                src = f'{input_dir}/v8.1_FT2022_{species}_{year}_bkl_{sector}_emi.nc'
-                if not os.path.exists(src):
-                    print('文件不存在：', src)
-                    continue
-                
-                # 获取排放数据和经纬度信息
-                ds = xr.open_dataset(src)['emissions']
-                lons = ds.coords['lon'].values
-                lats = ds.coords['lat'].values
-                
-                for month_i in range(12):
-                    # 获取对应月份的数据
-                    month = f'{month_i + 1:02d}'
-                    temp_var = ds.values * sector_dict[sector][month_i]  # 进行月分配 
+                # 处理VOC排放
+                if 'VOC_spec_' in species:
+                    voc_number = species.split('_')[-1]
                     
-                    # 设置输出文件名
-                    dst = f'{output_dir}/FT2022_{year}_{month}__{sector}__{voc_speice}.nc'
-                    
-                    if os.path.exists(dst):
+                    # 读取对应的物种分配表
+                    voc_speice = voc_species_map[voc_number]
+                    if voc_speice == '-':
                         continue
                     
-                    # 创建一个数据数组 (DataArray) 从你的 z 数组
-                    data_array = xr.DataArray(temp_var, dims=['latitude', 'longitude'])
-                    
-                    # 添加坐标信息
-                    data_array = data_array.assign_coords(longitude=lons, latitude=lats)
-
-                    # 保存数据数组为一个数据集 (Dataset)
-                    dataset = data_array.to_dataset(name='emission')
-                    
-                    # 添加坐标信息
-                    dataset.longitude.attrs['units'] = 'degrees_east'
-                    dataset.latitude.attrs['units'] = 'degrees_north'
-                    
-                    # 保存数据集为 NetCDF 文件
-                    dataset.to_netcdf(dst)
-                    
-                    # print(f'{dst} saved!')
-            
-            # 处理其他污染物排放
-            if 'AP_' in species:
-                
-                if 'PM10' in species: # 计算PMC
-                    pm10_src = f'{input_dir}/v8.1_FT2022_AP_PM10_{year}_bkl_{sector}_emi.nc'
-                    pm25_src = f'{input_dir}/v8.1_FT2022_AP_PM2.5_{year}_bkl_{sector}_emi.nc'
-                    
-                    if not os.path.exists(pm10_src) or not os.path.exists(pm25_src):
-                        continue
-                    
-                    # 获取排放数据和经纬度信息
-                    ds = xr.open_dataset(pm10_src)['emissions']
-                    lons = ds.coords['lon'].values
-                    lats = ds.coords['lat'].values
-                    
-                    for month_i in range(12):
-                        
-                        # 获取对应月份的数据
-                        month = f'{month_i + 1:02d}'
-                        
-                        pm10_ds = xr.open_dataset(pm10_src)['emissions'][month_i, ...].values
-                        pm25_ds = xr.open_dataset(pm25_src)['emissions'][month_i, ...].values
-                        temp_var = pm10_ds - pm25_ds
-                        
-                        # 设置输出文件名
-                        dst = f'{output_dir}/FT2022_{year}_{month}__{sector}__PMC.nc'
-                        
-                        # 如果文件已经存在 则直接跳过
-                        if os.path.exists(dst):
-                            continue
-                        
-                        # 创建一个数据数组 (DataArray) 从你的 z 数组
-                        data_array = xr.DataArray(temp_var, dims=['latitude', 'longitude'])
-                        
-                        # 添加坐标信息
-                        data_array = data_array.assign_coords(longitude=lons, latitude=lats)
-
-                        # 保存数据数组为一个数据集 (Dataset)
-                        dataset = data_array.to_dataset(name='emission')
-                        
-                        # 添加坐标信息
-                        dataset.longitude.attrs['units'] = 'degrees_east'
-                        dataset.latitude.attrs['units'] = 'degrees_north'
-                        
-                        # 保存数据集为 NetCDF 文件
-                        dataset.to_netcdf(dst)
-                    
-                    
-                else:
-                    # continue  # 循环调试
                     src = f'{input_dir}/v8.1_FT2022_{species}_{year}_bkl_{sector}_emi.nc'
                     if not os.path.exists(src):
                         print('文件不存在：', src)
                         continue
-                    # print(src)
-                    # MEIC_{year}_{mm}__{sector}__{pollutant}.nc
                     
                     # 获取排放数据和经纬度信息
+                    print('处理：', src)
                     ds = xr.open_dataset(src)['emissions']
                     lons = ds.coords['lon'].values
                     lats = ds.coords['lat'].values
                     
                     for month_i in range(12):
-                        
                         # 获取对应月份的数据
                         month = f'{month_i + 1:02d}'
-                        temp_var = ds[month_i, ...].values
+                        temp_var = ds.values * sector_dict[sector][month_i]  # 进行月分配 
                         
                         # 设置输出文件名
-                        dst = f'{output_dir}/FT2022_{year}_{month}__{sector}__{species[3::]}.nc'
+                        dst = f'{output_dir}/FT2022_{year}_{month}__{sector}__{voc_speice}.nc'
                         
                         if os.path.exists(dst):
                             continue
@@ -236,8 +147,104 @@ if __name__ == "__main__":
                         
                         # print(f'{dst} saved!')
                 
-                
-                
-                
-        
-        
+                # 处理其他污染物排放
+                if 'AP_' in species:
+                    
+                    if 'PM10' in species: # 计算PMC
+                        pm10_src = f'{input_dir}/v8.1_FT2022_AP_PM10_{year}_bkl_{sector}_emi.nc'
+                        pm25_src = f'{input_dir}/v8.1_FT2022_AP_PM2.5_{year}_bkl_{sector}_emi.nc'
+                        
+                        if not os.path.exists(pm10_src) or not os.path.exists(pm25_src):
+                            continue
+                        
+                        # 获取排放数据和经纬度信息
+                        ds = xr.open_dataset(pm10_src)['emissions']
+                        lons = ds.coords['lon'].values
+                        lats = ds.coords['lat'].values
+                        
+                        for month_i in range(12):
+                            
+                            # 获取对应月份的数据
+                            month = f'{month_i + 1:02d}'
+                            
+                            pm10_ds = xr.open_dataset(pm10_src)['emissions'][month_i, ...].values
+                            pm25_ds = xr.open_dataset(pm25_src)['emissions'][month_i, ...].values
+                            temp_var = pm10_ds - pm25_ds
+                            
+                            # 设置输出文件名
+                            dst = f'{output_dir}/FT2022_{year}_{month}__{sector}__PMC.nc'
+                            
+                            # 如果文件已经存在 则直接跳过
+                            if os.path.exists(dst):
+                                continue
+                            
+                            # 创建一个数据数组 (DataArray) 从你的 z 数组
+                            data_array = xr.DataArray(temp_var, dims=['latitude', 'longitude'])
+                            
+                            # 添加坐标信息
+                            data_array = data_array.assign_coords(longitude=lons, latitude=lats)
+
+                            # 保存数据数组为一个数据集 (Dataset)
+                            dataset = data_array.to_dataset(name='emission')
+                            
+                            # 添加坐标信息
+                            dataset.longitude.attrs['units'] = 'degrees_east'
+                            dataset.latitude.attrs['units'] = 'degrees_north'
+                            
+                            # 保存数据集为 NetCDF 文件
+                            dataset.to_netcdf(dst)
+                        
+                        
+                    else:
+                        # continue  # 循环调试
+                        src = f'{input_dir}/v8.1_FT2022_{species}_{year}_bkl_{sector}_emi.nc'
+                        if not os.path.exists(src):
+                            print('文件不存在：', src)
+                            continue
+                        # print(src)
+                        # MEIC_{year}_{mm}__{sector}__{pollutant}.nc
+                        
+                        # 获取排放数据和经纬度信息
+                        print('处理：', src)
+                        try:
+                            ds = xr.open_dataset(src)['emissions']
+                        except ValueError:
+                            continue
+                        lons = ds.coords['lon'].values
+                        lats = ds.coords['lat'].values
+                        
+                        for month_i in range(12):
+                            
+                            # 获取对应月份的数据
+                            month = f'{month_i + 1:02d}'
+                            temp_var = ds[month_i, ...].values
+                            
+                            # 设置输出文件名
+                            dst = f'{output_dir}/FT2022_{year}_{month}__{sector}__{species[3::]}.nc'
+                            
+                            if os.path.exists(dst):
+                                continue
+                            
+                            # 创建一个数据数组 (DataArray) 从你的 z 数组
+                            data_array = xr.DataArray(temp_var, dims=['latitude', 'longitude'])
+                            
+                            # 添加坐标信息
+                            data_array = data_array.assign_coords(longitude=lons, latitude=lats)
+
+                            # 保存数据数组为一个数据集 (Dataset)
+                            dataset = data_array.to_dataset(name='emission')
+                            
+                            # 添加坐标信息
+                            dataset.longitude.attrs['units'] = 'degrees_east'
+                            dataset.latitude.attrs['units'] = 'degrees_north'
+                            
+                            # 保存数据集为 NetCDF 文件
+                            dataset.to_netcdf(dst)
+                            
+                            # print(f'{dst} saved!')
+                    
+                    
+                    
+                    
+            
+            
