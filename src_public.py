@@ -67,7 +67,7 @@ def emis_meic(input_dir, output_dir):
 
 
 
-def emis_mix(input_dir, output_dir, year):
+def emis_mix(input_dir, output_dir, year, mix_version):
     os.makedirs(output_dir, exist_ok=True)
 
     # Search the files.
@@ -76,22 +76,35 @@ def emis_mix(input_dir, output_dir, year):
     # Get the name of pollutants.
     for file in files:
         ds = xr.open_dataset(file)
-        lats = ds.coords["lat"].__array__()
-        lons = ds.coords["lon"].__array__()
-        lonmin, latmax, lonmax, latmin = lons.min(), lats.max(), lons.max(), lats.min()
-        num_lon = lons.shape[0]
-        num_lat = lats.shape[0]
-        res = 0.25
-
+        
         # Set sectors.
         sectors = ["POWER", "INDUSTRY", "RESIDENTIAL", "TRANSPORT", "AGRICULTURE"]
         file_name = os.path.basename(file)
-        condition = fr"MICS_Asia_(.*?)_{year}_0.25x0.25.nc"
-        pollutant = re.findall(condition, file_name)[0].replace(".", "")
+        if mix_version == 2:
+            condition = fr"(.*?)_(.*?)_{year}_monthly_0.1deg.nc"
+            pollutant = re.findall(condition, file_name)[0][1].replace(".", "")
+            lats = ds["latitude"].__array__()[:, 0]
+            lons = ds["longitude"].__array__()[0, :]
+        elif mix_version == 1:
+            condition = fr"MICS_Asia_(.*?)_{year}_0.25x0.25.nc"
+            pollutant = re.findall(condition, file_name)[0].replace(".", "")
+            lats = ds.coords["lat"].__array__()
+            lons = ds.coords["lon"].__array__()
+        else:
+            raise ValueError("mix_version must be 1 or 2.")
 
         for var_name in list(ds.keys()):
-            var = ds[var_name]
-            months = var.__getattr__("time").values
+            
+            if mix_version == 1:
+                var = ds[var_name]
+                months = var.__getattr__("time").values
+            elif mix_version == 2:
+                dim_vars = ['time', 'longitude', 'latitude']
+                if var_name in dim_vars:
+                    continue
+                var = ds[var_name]
+                months = ds['time'].values
+
             for i in range(12):
                 month = "%.2d" % months[i]
                 temp_var = var[i, ...].values
@@ -174,12 +187,12 @@ def merge_mixmeic(meic_dir, meic_year, mix_dir, mix_year, output_dir):
             
     pass
     
-if __name__ == '__main__':
-    mix_file = r'F:\data\Emission\MIX\2010\MEIAT\MIX_2010_01__agriculture__NH3.nc'
-    meic_file = r'F:\data\Emission\MEICv1.4\2020\MEIAT\MEIC_2020_01__agriculture__NH3.nc'
-    output_file = 'MEICMIX_2010_01__agriculture__NH3.nc'
-    # mosaic(mix_file, meic_file, output_file)
-    mix_dir, mix_year = r'F:\data\Emission\MIX\2010\MEIAT', 2010
-    meic_dir, meic_year = r'F:\data\Emission\MEICv1.4\2020\MEIAT', 2020
-    output_dir = r'F:\data\Emission\MEICMIX\2020\MEIAT'
-    merge_mixmeic(meic_dir, meic_year, mix_dir, mix_year, output_dir)
+# if __name__ == '__main__':
+    # mix_file = r'F:\data\Emission\MIX\2010\MEIAT\MIX_2010_01__agriculture__NH3.nc'
+    # meic_file = r'F:\data\Emission\MEICv1.4\2020\MEIAT\MEIC_2020_01__agriculture__NH3.nc'
+    # output_file = 'MEICMIX_2010_01__agriculture__NH3.nc'
+    # # mosaic(mix_file, meic_file, output_file)
+    # mix_dir, mix_year = r'F:\data\Emission\MIX\2010\MEIAT', 2010
+    # meic_dir, meic_year = r'F:\data\Emission\MEICv1.4\2020\MEIAT', 2020
+    # output_dir = r'F:\data\Emission\MEICMIX\2020\MEIAT'
+    # merge_mixmeic(meic_dir, meic_year, mix_dir, mix_year, output_dir)
