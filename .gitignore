@@ -3,3 +3,5 @@
 emissions/*
 model_emission_*
 /__pycache__
+
+*.log
