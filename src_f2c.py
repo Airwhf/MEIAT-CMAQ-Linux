@@ -11,6 +11,27 @@ os.environ["IOAPI_ISPH"] = "6370000."
 # Ignore the warning information from pandas.
 pd.options.mode.chained_assignment = None
 
+import logging
+
+# logging configuration
+logging.basicConfig(
+    level=logging.INFO,                                # 日志级别
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',  # 日志格式
+    datefmt='%Y-%m-%d %H:%M:%S',                       # 时间格式
+    handlers=[
+        logging.StreamHandler(),                       # 输出到控制台
+        logging.FileHandler('app.log', encoding='utf-8')  # 输出到文件
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# 3. 书写日志
+# logger.debug("这是一条 DEBUG 级别日志，不会在 INFO 级别下输出")
+# logger.info("程序启动")     # INFO 级别会输出到控制台和文件
+# logger.warning("磁盘空间不足")  
+# logger.error("出现错误：%s", "连接超时")
+# logger.critical("致命错误，程序即将退出")
+
 
 def read_netcdf(file, shapefactor=2):
     '''
@@ -62,7 +83,7 @@ def create_source_table(input_dir, mm, sector, shapefactor=2):
     
     # Calculate the PMC.
     if "PMC" not in df.columns:
-        print("Calculate PMC...")
+        logger.info("Calculating PMC field ...")
         df["PMC"] = df['PM10'] - df['PM25']
     
     return df
@@ -201,4 +222,4 @@ def source2cmaq(emission_date, grid_desc, grid_name, sector, input_dir, inventor
     output_name = f"{output_dir}/{target_mechanism}_{sector}_{grid_name}_{yyyymmdd}.nc" # 1.5
     tmpf.save(output_name, format="NETCDF3_CLASSIC")
     tmpf.close()
-    print(f"Finish: {output_name}")
+    logger.info(f"Finish: {output_name}")
