@@ -15,11 +15,11 @@ if __name__ == "__main__":
     griddesc_name = 'CN27km'    
     
     # Set the inventory with Geotiff format.
-    meic_asc_dir = r'F:\data\Emission\MEICv1.4\2020'  
-    mix_dir = r'F:\data\Emission\MIX\2010'
-    mix_year = 2010
-    meic_year = 2020
-    merge_output_dir = r'F:\data\Emission\MEICMIX\2020'
+    meic_asc_dir = r'/Volumes/project/data_meic2ctm/meic_latlon0p25_cb05_2017'  
+    mix_dir = r'/Volumes/project/data_meic2ctm/mix_cb05_2017'
+    mix_year = 2017
+    meic_year = 2019
+    merge_output_dir = r'/Volumes/project/data_meic2ctm/output'
     sectors = ['residential', 'power', 'industry', 'agriculture', 'transportation']
     
     # Set the inventory.
@@ -42,12 +42,12 @@ if __name__ == "__main__":
     # process meic.
     meic_emission_dir = f'{meic_asc_dir}/MEIAT'
     os.makedirs(meic_emission_dir, exist_ok=True)
-    emis_meic(meic_asc_dir, meic_emission_dir)  
+    # emis_meic(meic_asc_dir, meic_emission_dir)  
     
     # process mix.
     mix_emission_dir = f'{mix_dir}/MEIAT'
     os.makedirs(mix_emission_dir, exist_ok=True)
-    emis_mix(mix_dir, mix_emission_dir, mix_year)
+    emis_mix(mix_dir, mix_emission_dir, mix_year, 2)
     
     # merge meic and mix.
     emission_dir = merge_output_dir
