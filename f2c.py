@@ -1,47 +1,68 @@
-# @Time    : 2023/02/21 19:17
-# @Author  : Haofan Wang
-# @Version : python3.9
-# @Email   : wanghf58@mail2.sysu.edu.cn
 import os
+import sys
 import time
+import pandas as pd
+from multiprocessing import Pool, cpu_count
+from functools import partial
 from src_f2c import *
 
+sys.stdout = open(os.devnull, 'w')  # 可选：关闭标准输出
+
+# 单个任务执行函数
+def run_source2cmaq(sector, emission_date, griddesc_file, griddesc_name, emission_dir,
+                    inventory_mechanism, target_mechanism, output_dir, shapefactor):
+    source2cmaq(
+        str(emission_date), griddesc_file, griddesc_name,
+        sector, emission_dir, inventory_mechanism,
+        target_mechanism, output_dir, shapefactor=shapefactor
+    )
 
 if __name__ == "__main__":
     # ========================================================================================
-    # Set GRIDDESC configuration.
-    griddesc_file = 'input/GRIDDESC.CN27km'
-    griddesc_name = 'CN27km'    
-    
-    # Set the inventory with Geotiff format.
-    emission_dir = r'/Volumes/project/Emissions/EDGAR_reformat'  
-    sectors = ['AGRICULTURE', 'BUILDINGS', 'FUEL_EXPLOITATION',
-               'IND_COMBUSTION', 'IND_PROCESSES', 'POWER_INDUSTRY', 'TRANSPORT', 'WASTE']
-    
-    # Set the inventory.
-    inventory_label = 'FT2022'
-    inventory_year = 2019
-    
-    # Set the inventory period.
-    start_date = '2017-01-01'
-    end_date = '2017-01-02'
-    
-    # Species allocation.
-    inventory_mechanism = 'EDGAR'
+    griddesc_file = 'input/GRIDDESC.CN30KM'
+    griddesc_name = 'CN30KM'
+
+    emission_dir = r'/work/home/wanghf58/MEIAT-CMAQ-Linux-main/emissions/HEIC_MEIAT_masked_keep'
+    sectors = ['AGRICULTURE', 'POWER', 'INDUSTRY', 'TRANSPORTATION', 'SOLVENT', 'RESIDENTIAL']
+    inventory_label = 'HEIC'
+    inventory_year = 2023
+    start_date = '2022-12-19'
+    end_date = '2024-01-02'
+    inventory_mechanism = 'VOC'
     target_mechanism = 'CB06'
-    
-    # shape factor
     shapefactor = 2
+    core_nums = 64
     # ========================================================================================
-    
+
     start_time = time.time()
     output_dir = f'model_emission_{griddesc_name}'
     os.makedirs(output_dir, exist_ok=True)
+
     periods = pd.period_range(pd.to_datetime(start_date), pd.to_datetime(end_date), freq='D')
-    for sector in sectors:
-        for emission_date in periods:
-            source2cmaq(str(emission_date), griddesc_file, griddesc_name, sector, emission_dir, inventory_mechanism, target_mechanism, output_dir, shapefactor=shapefactor)
-            
+
+    # 构建任务列表
+    tasks = [
+        (sector, emission_date)
+        for sector in sectors for emission_date in periods
+    ]
+
+    # 定义参数函数（使用 partial 绑定不变参数）
+    task_func = partial(
+        run_source2cmaq,
+        griddesc_file=griddesc_file,
+        griddesc_name=griddesc_name,
+        emission_dir=emission_dir,
+        inventory_mechanism=inventory_mechanism,
+        target_mechanism=target_mechanism,
+        output_dir=output_dir,
+        shapefactor=shapefactor
+    )
+
+    # 启动进程池
+    with Pool(processes=core_nums) as pool:
+        pool.starmap(task_func, tasks)
+
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print(f"### Time consuming: {elapsed_time} s ###")
+    print(f"### Time consuming (multiprocessing): {elapsed_time:.2f} s ###")
+

@@ -204,7 +204,7 @@ def source2cmaq(emission_date, grid_desc, grid_name, sector, input_dir, inventor
 
         except KeyError:
             # If don not have this pollutant in GeoTIFF, skip it.
-            print(f"Warning: Do not have the pollutant named {fname}.")
+            logger.warning(f"Do not have the pollutant named {fname}.")
             continue
         
     # Get rid of initial DUMMY variable

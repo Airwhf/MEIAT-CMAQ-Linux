@@ -1,5 +1,6 @@
 # MEIAT-CMAQ Linux Version 5.0
 
+1. The species profile from MEIC are archived `https://github.com/Airwhf/My_WRF_CMAQ_Configuration/tree/main/share`.
 
 ## 使用说明
 
