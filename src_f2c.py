@@ -34,9 +34,6 @@ logger = logging.getLogger(__name__)
 
 
 def read_netcdf(file, shapefactor=2):
-    '''
-    
-    '''
     dataset = xr.open_dataset(file)
     longitude = dataset.coords["longitude"].values
     latitude = dataset.coords["latitude"].values
